@@ -366,7 +366,9 @@
       form.append('file', file);
       const res = await fetch(IMS_API.BASE_URL + '/products/import', {
         method: 'POST',
-        headers: authHeaders(),
+        headers: {
+          ...(state.token ? { Authorization: `Bearer ${state.token}` } : {})
+        },
         body: form
       });
       if (!res.ok) throw new Error('Import failed');
