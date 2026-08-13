@@ -1,14 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IMS Web</title>
-  <link rel="stylesheet" href="/css/styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMS — Inventory Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <div id="app"></div>
-  <script src="/js/config.js"></script>
-  <script src="/js/app.js"></script>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="authScreen">
+
+  <div class="auth-brandpanel texture-diagonal">
+    <div>
+      <div class="eyebrow">Manifest / Access</div>
+      <h1>Every unit,<br>accounted for.</h1>
+      <p class="lede">Track stock levels, movement, and value across your warehouse in one place — with role-based access for Admins, Managers, and Staff.</p>
+      <ul class="manifest-list">
+        <li><span class="num">01</span><span>Real-time stock gauges with automatic low-stock alerts sent by email.</span></li>
+        <li><span class="num">02</span><span>Full sales &amp; purchase transaction history, tied to payments.</span></li>
+        <li><span class="num">03</span><span>Bulk product management via CSV import and export.</span></li>
+      </ul>
+    </div>
+    <div>
+      <div class="barcode" aria-hidden="true" id="barcodeDecor"></div>
+      <div class="manifest-foot"><span>IMS · Rev. 2026</span><span>Clean Architecture / .NET 8</span></div>
+    </div>
+  </div>
+
+  <div class="auth-formpanel">
+    <div class="auth-card">
+      <div class="ticket-stub">
+        <div class="auth-brand"><span class="mark">IMS</span><br><span class="sub">Stock Control</span></div>
+        <div class="ticket-no">Access ticket<strong id="ticketNo">№ 0000</strong></div>
+      </div>
+      <div class="auth-body">
+        <p class="auth-desc">Sign in to manage products, stock movement, and alerts.</p>
+
+        <div class="auth-error" id="authError"></div>
+
+        <form class="auth-form active" id="loginForm" onsubmit="return handleLogin(event)">
+          <div class="field"><label>Email</label><input type="email" id="loginEmail" required autocomplete="username"></div>
+          <div class="field"><label>Password</label><input type="password" id="loginPassword" required autocomplete="current-password"></div>
+          <button class="btn btn-primary btn-block" type="submit" id="loginBtn">Log in</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">IMS <small>STOCK CTRL</small></div>
+    <div class="role-tag">Signed in — <span id="userRoleTag">—</span></div>
+
+    <div class="nav-group">
+      <div class="nav-eyebrow">Overview</div>
+      <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')"><span class="ic">▣</span><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-page="reports" data-roles="Admin,Manager" onclick="navigate('reports')"><span class="ic">▤</span><span class="nav-label">Reports</span></button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-eyebrow">Stock</div>
+      <button class="nav-item" data-page="products" onclick="navigate('products')"><span class="ic">▦</span><span class="nav-label">Products</span></button>
+      <button class="nav-item" data-page="categories" onclick="navigate('categories')"><span class="ic">◧</span><span class="nav-label">Categories</span></button>
+      <button class="nav-item" data-page="alerts" data-roles="Admin,Manager" onclick="navigate('alerts')"><span class="ic">▲</span><span class="nav-label">Low stock alerts</span></button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-eyebrow">Activity</div>
+      <button class="nav-item" data-page="transactions" onclick="navigate('transactions')"><span class="ic">⇄</span><span class="nav-label">Transactions</span></button>
+      <button class="nav-item" data-page="payments" data-roles="Admin,Manager" onclick="navigate('payments')"><span class="ic">$</span><span class="nav-label">Payments</span></button>
+    </div>
+
+    <div class="sidebar-foot">
+      <div style="font-size:11.5px;color:#8FA097;margin-bottom:10px;" class="mono" id="userEmailTag"></div>
+      <button class="logout-btn" onclick="logout()">Log out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="page-dashboard">
+      <div class="topbar">
+        <div><h1 class="page-title">Dashboard</h1><p class="page-sub">Live snapshot of stock and activity.</p></div>
+        <div class="api-pill"><span class="dot"></span><span id="apiPillText">—</span></div>
+      </div>
+      <div class="stat-grid" id="dashStats">
+        <div class="loading-row">Loading overview…</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Recent low stock alerts</h3><button class="btn btn-outline btn-sm" onclick="navigate('alerts')">View all</button></div>
+        <div class="panel-body" id="dashAlerts"><div class="loading-row">Loading…</div></div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="section" id="page-products">
+      <div class="topbar">
+        <div><h1 class="page-title">Products</h1><p class="page-sub">Every item tracked in inventory.</p></div>
+        <div class="panel-actions">
+          <input type="file" id="csvImportFile" accept=".csv" style="display:none" onchange="importCsv(this)">
+          <button class="btn btn-outline btn-sm" id="importBtn" onclick="document.getElementById('csvImportFile').click()">Import CSV</button>
+          <button class="btn btn-outline btn-sm" id="exportBtn" onclick="exportCsv()">Export CSV</button>
+          <button class="btn btn-primary btn-sm" id="addProductBtn" onclick="openProductModal()">+ Add product</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All products</h3>
+          <input type="text" id="productSearch" placeholder="Filter by name…" oninput="renderProducts()" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;min-width:200px;">
+        </div>
+        <div class="panel-body" style="overflow-x:auto;" id="productsTableWrap"><div class="loading-row">Loading products…</div></div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section class="section" id="page-categories">
+      <div class="topbar">
+        <div><h1 class="page-title">Categories</h1><p class="page-sub">Group products for filtering and reporting.</p></div>
+        <button class="btn btn-primary btn-sm" id="addCategoryBtn" onclick="openCategoryModal()">+ Add category</button>
+      </div>
+      <div class="panel"><div class="panel-body" style="overflow-x:auto;" id="categoriesTableWrap"><div class="loading-row">Loading categories…</div></div></div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section class="section" id="page-transactions">
+      <div class="topbar">
+        <div><h1 class="page-title">Transactions</h1><p class="page-sub">Sales and purchases affecting stock.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="openTransactionModal()">+ Record transaction</button>
+      </div>
+      <div class="panel"><div class="panel-body" style="overflow-x:auto;" id="transactionsTableWrap"><div class="loading-row">Loading transactions…</div></div></div>
+    </section>
+
+    <!-- PAYMENTS -->
+    <section class="section" id="page-payments">
+      <div class="topbar">
+        <div><h1 class="page-title">Payments</h1><p class="page-sub">Track payment status against transactions.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="openPaymentModal()">+ Add payment</button>
+      </div>
+      <div class="panel"><div class="panel-body" style="overflow-x:auto;" id="paymentsTableWrap"><div class="loading-row">Loading payments…</div></div></div>
+    </section>
+
+    <!-- LOW STOCK ALERTS -->
+    <section class="section" id="page-alerts">
+      <div class="topbar">
+        <div><h1 class="page-title">Low stock alerts</h1><p class="page-sub">Items that have crossed their reorder threshold.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="openAlertModal()">+ Create alert</button>
+      </div>
+      <div class="panel"><div class="panel-body" style="overflow-x:auto;" id="alertsTableWrap"><div class="loading-row">Loading alerts…</div></div></div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="section" id="page-reports">
+      <div class="topbar">
+        <div><h1 class="page-title">Reports</h1><p class="page-sub">Inventory summary and top sellers.</p></div>
+        <button class="btn btn-outline btn-sm" onclick="loadReports()">Refresh</button>
+      </div>
+      <div class="stat-grid" id="reportStats"><div class="loading-row">Loading report…</div></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Top selling products</h3></div>
+        <div class="panel-body" style="overflow-x:auto;" id="topSellersWrap"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toastHost"></div>
+
+<!-- Generic modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">Title</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="modalSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
 </body>
 </html>
