@@ -5,7 +5,7 @@ import { catchError, tap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { LoginRequest, LoginResponse, Product, Category, Transaction, Payment, InventoryReport, Alert } from '../models/ims.models';
 
-export const API_BASE = 'http://localhost:5150';
+export const API_BASE = 'http://imsapp.runasp.net';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -55,13 +55,13 @@ export class ApiService {
   login(payload: LoginRequest) {
     return this.http.post<LoginResponse>(`${API_BASE}/api/Auth/Login`, payload).pipe(
       tap(res => {
-        this.tokenSubject.next(res.token);
-        localStorage.setItem('ims_token', res.token);
-        if (res.email) {
-          this.emailSubject.next(res.email);
-          localStorage.setItem('ims_email', res.email);
+        this.tokenSubject.next(res.Token);
+        localStorage.setItem('ims_token', res.Token);
+        if (res.Email) {
+          this.emailSubject.next(res.Email);
+          localStorage.setItem('ims_email', res.Email);
         }
-        const role = Array.isArray(res.roles) && res.roles.length ? res.roles[0] : 'Admin';
+        const role = Array.isArray(res.Roles) && res.Roles.length ? res.Roles[0] : 'Admin';
         this.roleSubject.next(role);
         localStorage.setItem('ims_role', role);
       }),

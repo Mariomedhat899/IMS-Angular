@@ -4,10 +4,10 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
-  email: string;
-  roles: string[];
-  expiration: string;
+  Token: string;
+  Email: string;
+  Roles: string[];
+  Expiration: string;
 }
 
 export interface Product {
