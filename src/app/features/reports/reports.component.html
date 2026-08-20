@@ -1,0 +1,57 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reports</h1>
+      <p class="page-sub">Inventory summary and analytics.</p>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading && !loadError">Loading report...</div>
+  <div class="empty-state error" *ngIf="loadError">{{ loadError }}</div>
+
+  <div class="stat-grid stagger-target" *ngIf="!loading && !loadError && report">
+    <div class="stat-card stagger-item">
+      <div class="stat-label">Total stock value</div>
+      <div class="stat-value">{{ report.totalStockValue | number:'1.0-0' }}</div>
+    </div>
+    <div class="stat-card stagger-item">
+      <div class="stat-label">Products tracked</div>
+      <div class="stat-value">{{ report.totalProducts }}</div>
+    </div>
+    <div class="stat-card stagger-item">
+      <div class="stat-label">Payments total</div>
+      <div class="stat-value">{{ report.payments.totalAmount | number:'1.0-0' }}</div>
+    </div>
+    <div class="stat-card stagger-item">
+      <div class="stat-label">Receipts total</div>
+      <div class="stat-value">{{ report.receipts.totalAmount | number:'1.0-0' }}</div>
+    </div>
+  </div>
+
+  <div class="panel" *ngIf="!loading && !loadError && report?.topSellingProducts?.length">
+    <div class="panel-head">
+      <span>Top products</span>
+    </div>
+    <div class="panel-body">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Qty</th><th>Revenue</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of report?.topSellingProducts || []">
+              <td>{{ t.productName }}</td>
+              <td>{{ t.quantitySold }}</td>
+              <td>{{ t.revenue | number:'1.0-0' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !loadError && !report?.topSellingProducts?.length">
+    <div class="empty-icon" aria-hidden="true"></div>
+    <span>No top products yet.</span>
+  </div>
+</div>

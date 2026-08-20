@@ -1,0 +1,68 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">Live snapshot of stock and activity.</p>
+    </div>
+  </div>
+
+  <div class="stat-grid stagger-target" *ngIf="!loading && !loadError">
+    <div class="stat-card stagger-item">
+      <div class="stat-label">Products</div>
+      <div class="stat-value">{{ productCount }}</div>
+      <div class="stat-sub">{{ categoryCount }} categories</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Categories</div>
+      <div class="stat-value">{{ categoryCount }}</div>
+      <div class="stat-sub">Grouping {{ productCount }} products</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Low stock items</div>
+      <div class="stat-value">{{ lowStockCount }}</div>
+      <div class="stat-sub">{{ lowStockCount === 0 ? 'All items healthy' : 'Needs attention' }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Est. stock value</div>
+      <div class="stat-value">{{ stockValue | number:'1.0-0' }}</div>
+      <div class="stat-sub">Price × quantity on hand</div>
+    </div>
+  </div>
+  <div class="empty-state" *ngIf="loading && !loadError">Loading dashboard...</div>
+  <div class="empty-state error" *ngIf="loadError">{{ loadError }}</div>
+
+  <div class="panel" *ngIf="!loading && !loadError">
+    <div class="panel-head">
+      <span>Recent low stock alerts</span>
+      <a routerLink="/alerts" class="btn btn-outline">View all</a>
+    </div>
+    <div class="panel-body">
+      <div class="table-wrap stagger-target">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Current stock</th><th>Threshold</th><th>Level</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of alerts" class="stagger-item">
+            <td>{{ a.productName }}</td>
+            <td>{{ a.currentStock }}</td>
+            <td>{{ a.threshold }}</td>
+            <td>
+              <div class="gauge">
+                <div class="gauge-fill" [class.warn]="a.currentStock < a.threshold && a.currentStock >= 5" [class.danger]="a.currentStock < 5" [style.width.%]="gaugePct(a.currentStock)"></div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="alerts.length === 0">
+            <td colspan="4" class="empty">
+              <div class="empty-state">
+                <div class="empty-icon" aria-hidden="true"></div>
+                <span>No active alerts.</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

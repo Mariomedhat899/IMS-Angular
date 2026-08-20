@@ -1,0 +1,43 @@
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-main">IMS STOCK CTRL</span>
+    <span class="brand-sub">Inventory Management</span>
+  </div>
+
+  <div class="role-tag">SIGNED IN — {{ api.userRole?.toUpperCase() || 'ADMIN' }}</div>
+
+  <div class="nav-group">
+    <div class="nav-eyebrow">OVERVIEW</div>
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/reports" routerLinkActive="active">Reports</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-eyebrow">STOCK</div>
+    <a routerLink="/products" routerLinkActive="active">Products</a>
+    <a routerLink="/categories" routerLinkActive="active">Categories</a>
+    <a routerLink="/alerts" routerLinkActive="active">Low stock alerts</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-eyebrow">ACTIVITY</div>
+    <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
+    <a routerLink="/payments" routerLinkActive="active">Payments</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-eyebrow">MANAGEMENT</div>
+    <a routerLink="/users" routerLinkActive="active">Users</a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-email">{{ api.userEmail || 'admin@ims.local' }}</div>
+    <button class="logout-btn" (click)="logout()">Log out</button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="page-transition" [@routeAnimations]="routeAnimationName()">
+    <router-outlet></router-outlet>
+  </div>
+</main>

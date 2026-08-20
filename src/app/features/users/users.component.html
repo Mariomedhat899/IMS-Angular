@@ -1,0 +1,168 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Users</h1>
+      <p class="page-sub">Access and role management.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="btn btn-add" *ngIf="canAddUser()" (click)="addNew()">➕ Add user</button>
+      <button class="btn btn-ghost edit" (click)="openSettings()">Settings</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <div class="table-wrap stagger-target" *ngIf="!loading && !loadError">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>API key</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of managedUsers" class="clickable stagger-item" (click)="isSuperAdmin && edit(u)">
+              <td>{{ u.fullName || '—' }}</td>
+              <td>{{ u.email }}</td>
+              <td>
+                <div class="role-group">
+                  <span class="badge badge-teal" *ngIf="u.roles?.length">{{ u.roles[0] }}</span>
+                  <span class="badge" *ngIf="!u.roles?.length">No roles</span>
+                  <span class="badge badge-secured" *ngIf="isSecured(u)"></span>
+                </div>
+              </td>
+              <td>{{ u.phoneNumber || '—' }}</td>
+              <td>
+                <div class="api-key-cell">
+                  <div class="api-key-row">
+                    <span class="badge" [class.badge-ok]="keyStatus(u).class==='ok'" [class.badge-warn]="keyStatus(u).class==='warn'" [class.badge-danger]="keyStatus(u).class==='danger'">{{ keyStatus(u).text }}</span>
+                  </div>
+                  <div class="api-key-meta" *ngIf="keyStatus(u).meta">
+                    <span class="muted">{{ keyStatus(u).meta }}</span>
+                  </div>
+                  <div class="api-key-meta" *ngIf="u.apiKey?.expiresAt">
+                    <span class="muted">{{ u.apiKey?.expiresAt | date:'short' }}</span>
+                    <button class="btn btn-ghost edit" *ngIf="isSuperAdmin" (click)="$event.stopPropagation(); editKeyExpiry(u)">Edit</button>
+                  </div>
+                  <div class="expired-note" *ngIf="keyStatus(u).class==='danger' && keyStatus(u).text==='Expired'">
+                    <span class="muted">Requests using this key are rejected until it is renewed.</span>
+                  </div>
+                </div>
+              </td>
+              <td class="actions">
+                <button class="btn btn-ghost" *ngIf="isSuperAdmin" (click)="$event.stopPropagation(); openProvision(u)">Provision</button>
+                <button class="btn btn-delete" *ngIf="isSuperAdmin" (click)="$event.stopPropagation(); remove(u.id)">Delete</button>
+              </td>
+            </tr>
+            <tr *ngIf="managedUsers.length === 0">
+              <td colspan="6" class="empty">No managed users found. Use Settings to manage your own password.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" *ngIf="loading && !loadError">Loading users...</div>
+      <div class="empty-state error" *ngIf="loadError">{{ loadError }}</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-header-title">
+          <span class="modal-header-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          {{ editing ? 'Edit user' : 'New user' }}
+        </span>
+        <button type="button" class="modal-header-close" (click)="closeModal()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <form (ngSubmit)="save()" class="product-form">
+          <div class="form-grid">
+            <label><span>Full name</span><input [(ngModel)]="fullName" name="fullName" placeholder="Full name" required /></label>
+            <label><span>Email</span><input [(ngModel)]="email" name="email" placeholder="user@example.com" required [readonly]="!!editing" /></label>
+            <label><span>Phone</span><input [(ngModel)]="phoneNumber" name="phoneNumber" placeholder="Phone number" /></label>
+            <label><span>Role</span>
+              <select [(ngModel)]="selectedRole" name="selectedRole">
+                <option [ngValue]="null">Select role</option>
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="Staff">Staff</option>
+              </select>
+            </label>
+            <label *ngIf="adding"><span>Password</span><input [(ngModel)]="password" name="password" type="text" placeholder="Leave blank for random" /></label>
+            <label class="full" *ngIf="adding"><span>API key expiry</span><input type="datetime-local" [(ngModel)]="apiKeyExpiry" name="apiKeyExpiry" placeholder="Optional" /></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{ editing ? 'Update' : 'Create' }}</button>
+          </div>
+          <p class="status" [class.ok]="messageColor === okColor" [class.err]="messageColor === errColor" *ngIf="message">{{ message }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showProvisionModal" (click)="closeProvision()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-header-title">
+          <span class="modal-header-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          {{ provisionTitle() }}
+        </span>
+        <button type="button" class="modal-header-close" (click)="closeProvision()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <form (ngSubmit)="saveProvision()" class="product-form">
+          <div class="form-grid">
+            <label class="full"><span>Expiry datetime</span><input type="datetime-local" [(ngModel)]="provisionExpiry" name="provisionExpiry" required /></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+          <p class="status" [class.ok]="messageColor === okColor" [class.err]="messageColor === errColor" *ngIf="message">{{ message }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showSettingsModal" (click)="showSettingsModal=false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-header-title">
+          <span class="modal-header-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          Settings
+        </span>
+        <button type="button" class="modal-header-close" (click)="showSettingsModal=false" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <form (ngSubmit)="saveSettings()" class="product-form">
+          <div class="form-grid">
+            <label class="full"><span>Current password</span><input [(ngModel)]="currentPassword" name="currentPassword" type="password" placeholder="Current password" required /></label>
+            <label class="full"><span>New password</span><input [(ngModel)]="newPassword" name="newPassword" type="password" placeholder="New password" required minlength="8" /></label>
+            <label class="full"><span>Confirm new password</span><input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm new password" required /></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Change password</button>
+          </div>
+          <p class="status" [class.ok]="messageColor === okColor" [class.err]="messageColor === errColor" *ngIf="message">{{ message }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDelete()">
+    <div class="modal-card modal-card--danger" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span>Delete user</span>
+        <button type="button" class="modal-header-close" (click)="closeDelete()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <div class="confirm-body">
+          <div class="confirm-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </div>
+          <p class="confirm-text">Are you sure you want to delete <strong>{{ deleteTargetName }}</strong>? This cannot be undone.</p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+        </div>
+        <p class="status" [class.ok]="messageColor === okColor" [class.err]="messageColor === errColor" *ngIf="message">{{ message }}</p>
+      </div>
+    </div>
+  </div>
+</div>

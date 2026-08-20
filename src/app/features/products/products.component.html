@@ -1,0 +1,118 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Products</h1>
+      <p class="page-sub">Every item tracked in inventory.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-outline" (click)="importCsv()">Import CSV</button>
+      <button class="btn btn-outline" (click)="exportCsv()">Export CSV</button>
+      <button class="btn btn-add" (click)="addNew()">➕ Add product</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <div class="search-bar">
+        <input class="search-input" placeholder="Filter by name..." [(ngModel)]="search" (input)="onSearch()" />
+      </div>
+      <div class="table-wrap stagger-target" *ngIf="!loading && !loadError">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of filtered" [class.selected]="editing?.id === p.id" class="clickable stagger-item" (click)="edit(p)">
+              <td>
+                <div class="product-name">{{ p.name }}</div>
+                <div class="product-meta">{{ p.supplier || '-' }}</div>
+              </td>
+              <td>{{ categoriesMap[p.categoryId] || p.categoryId }}</td>
+              <td>{{ p.price | number:'1.2-2' }}</td>
+              <td>
+                <div class="stock-cell">
+                  <div class="stock-bar">
+                    <div class="stock-fill" [style.width.%]="stockPct(p)" [class.warn]="p.quantityInStock < 30" [class.danger]="p.quantityInStock < 10"></div>
+                  </div>
+                  <span class="stock-count">{{ p.quantityInStock }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class.badge-ok]="p.quantityInStock >= 30" [class.badge-warn]="p.quantityInStock >= 10 && p.quantityInStock < 30" [class.badge-danger]="p.quantityInStock < 10">
+                  {{ p.quantityInStock >= 30 ? 'IN STOCK' : p.quantityInStock >= 10 ? 'LOW' : 'CRITICAL' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="btn btn-delete" (click)="$event.stopPropagation(); remove(p.id)">Delete</button>
+              </td>
+            </tr>
+            <tr *ngIf="filtered.length === 0">
+              <td colspan="6" class="empty">No products found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" *ngIf="loading && !loadError">Loading products...</div>
+      <div class="empty-state error" *ngIf="loadError">{{ loadError }}</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-header-title">
+          <span class="modal-header-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+          {{ editing ? 'Edit product' : 'New product' }}
+        </span>
+        <button type="button" class="modal-header-close" (click)="closeModal()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <form (ngSubmit)="save()" class="product-form">
+          <div class="form-grid">
+            <label><span>Product Name</span><input [(ngModel)]="name" name="name" placeholder="Product name" required /></label>
+            <label><span>Price</span><input type="number" [(ngModel)]="price" name="price" placeholder="0.00" required /></label>
+            <label><span>Quantity</span><input type="number" [(ngModel)]="quantity" name="quantity" placeholder="0" required /></label>
+            <label><span>Supplier</span><input [(ngModel)]="supplier" name="supplier" placeholder="Supplier" /></label>
+            <label class="full"><span>Category</span>
+              <select [(ngModel)]="categoryId" name="categoryId" required>
+                <option [ngValue]="null">Select category</option>
+                <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
+              </select>
+            </label>
+            <label class="full"><span>Description</span><textarea [(ngModel)]="description" name="description" rows="3" placeholder="Description"></textarea></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{ editing ? 'Update' : 'Create' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showDeleteModal" (click)="closeDelete()">
+    <div class="modal-card modal-card--danger" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span>Delete product</span>
+        <button type="button" class="modal-header-close" (click)="closeDelete()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <div class="confirm-body">
+          <div class="confirm-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </div>
+          <p class="confirm-text">Are you sure you want to delete <strong>{{ deleteTargetName }}</strong>? This cannot be undone.</p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+<div class="page debug-rows">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Transactions</h1>
+      <p class="page-sub">Payments and receipts.</p>
+    </div>
+    <button class="btn btn-add" (click)="openModal()">➕ Record transaction</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <div class="table-wrap stagger-target">
+        <p class="status" *ngIf="loading">Loading transactions…</p>
+        <div *ngIf="!loading">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Type</th><th>Quantity</th><th>Total Amount</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of transactions" class="stagger-item">
+              <td>{{ t.productName }}</td>
+              <td><span class="badge" [class.badge-teal]="t.type === 'receipt'" [class.badge-amber]="t.type === 'payment'">{{ t.type }}</span></td>
+              <td>{{ t.quantity }}</td>
+              <td>{{ t.totalAmount | number:'1.2-2' }}</td>
+              <td>{{ t.date | date:'short' }}</td>
+            </tr>
+            <tr *ngIf="transactions.length === 0">
+              <td colspan="5" class="empty">No transactions yet.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="status err" *ngIf="message">{{ message }}</p>
+        <button class="btn btn-outline" *ngIf="message" (click)="load()">Retry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span>Record transaction</span>
+        <button type="button" class="modal-header-close" (click)="closeModal()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <form (ngSubmit)="add()" class="product-form">
+          <div class="form-grid">
+            <label><span>Product</span>
+              <select [(ngModel)]="selectedProductId" name="selectedProductId" required>
+                <option [ngValue]="null">Select product</option>
+                <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }}</option>
+              </select>
+            </label>
+            <label><span>Type</span>
+              <select [(ngModel)]="type" name="type">
+                <option>Payment</option>
+                <option>Receipt</option>
+              </select>
+            </label>
+            <label><span>Quantity</span><input type="number" [(ngModel)]="quantity" name="quantity" min="1" required /></label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Add</button>
+          </div>
+          <p class="status" *ngIf="message" [class.ok]="message.includes('added')" [class.err]="!message.includes('added')">{{ message }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

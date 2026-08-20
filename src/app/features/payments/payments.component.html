@@ -1,0 +1,65 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Payments</h1>
+      <p class="page-sub">Track payment status against transactions.</p>
+    </div>
+    <button class="btn btn-add" (click)="addNew()">➕ Add payment</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-body">
+      <div class="table-wrap stagger-target">
+        <table>
+          <thead>
+            <tr><th>Reference</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of payments" (click)="edit(p)" class="stagger-item">
+              <td>{{ p.transactionReference }}</td>
+              <td>{{ p.amount | number:'1.2-2' }}</td>
+              <td>{{ p.paymentMethod }}</td>
+              <td><span class="badge" [class.badge-ok]="p.status.toLowerCase()==='completed'" [class.badge-warn]="p.status.toLowerCase()==='pending'" [class.badge-danger]="p.status.toLowerCase()==='failed'">{{ p.status }}</span></td>
+              <td>{{ p.paymentDate | date:'short' }}</td>
+              <td class="actions">
+                <button class="btn btn-edit" (click)="$event.stopPropagation(); edit(p)">✏️ Edit</button>
+              </td>
+            </tr>
+            <tr *ngIf="payments.length === 0">
+              <td colspan="6" class="empty">No payments.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span>{{ editingId ? 'Edit payment' : 'New payment' }}</span>
+        <button type="button" class="modal-header-close" (click)="closeModal()" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="panel-body">
+        <form (ngSubmit)="save()" class="product-form">
+          <div class="form-grid">
+            <label><span>Amount</span><input type="number" [(ngModel)]="amount" name="amount" placeholder="0.00" required /></label>
+            <label><span>Payment Method</span><input [(ngModel)]="paymentMethod" name="paymentMethod" placeholder="Payment method" required /></label>
+            <label><span>Transaction Reference</span><input [(ngModel)]="transactionReference" name="transactionReference" placeholder="Reference" required /></label>
+            <label><span>Status</span>
+              <select [(ngModel)]="status" name="status">
+                <option>pending</option>
+                <option>completed</option>
+                <option>failed</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{ editingId ? 'Update' : 'Create' }}</button>
+          </div>
+          <p class="status" *ngIf="message" [class.ok]="message.includes('updated') || message.includes('created')" [class.err]="!message.includes('updated') && !message.includes('created')">{{ message }}</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

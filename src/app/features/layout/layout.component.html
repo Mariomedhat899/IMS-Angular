@@ -1,0 +1,49 @@
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-main">IMS STOCK CTRL</span>
+    <span class="brand-sub">Inventory Management</span>
+  </div>
+  <div class="role-tag">SIGNED IN — {{ api.userRole?.toUpperCase() || 'ADMIN' }}</div>
+  <div class="nav-group">
+    <div class="nav-eyebrow">OVERVIEW</div>
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/reports" routerLinkActive="active">Reports</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-eyebrow">STOCK</div>
+    <a routerLink="/products" routerLinkActive="active">Products</a>
+    <a routerLink="/categories" routerLinkActive="active">Categories</a>
+    <a routerLink="/alerts" routerLinkActive="active">Low stock alerts</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-eyebrow">ACTIVITY</div>
+    <a routerLink="/transactions" routerLinkActive="active">Transactions</a>
+    <a routerLink="/payments" routerLinkActive="active">Payments</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-eyebrow">MANAGEMENT</div>
+    <a routerLink="/users" routerLinkActive="active">Users</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-email">{{ api.userEmail || 'admin@ims.local' }}</div>
+    <button class="logout-btn" (click)="logout()">Log out</button>
+  </div>
+</nav>
+
+<main class="main" *ngIf="!logoutLoading">
+  <div class="page-transition">
+    <router-outlet></router-outlet>
+  </div>
+</main>
+
+<div class="logout-loader" *ngIf="logoutLoading">
+  <div class="logout-loader-inner">
+    <div class="logout-barcode">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span>
+    </div>
+    <p class="logout-text">Cleaning your inventory while you’re away…</p>
+    <p class="logout-sub">We’ll be waiting for you ✨</p>
+  </div>
+</div>

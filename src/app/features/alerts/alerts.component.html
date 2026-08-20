@@ -1,0 +1,55 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Alerts</h1>
+      <p class="page-sub">Low stock warnings and thresholds.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span>Set alert threshold</span>
+    </div>
+    <div class="panel-body">
+      <form (ngSubmit)="set()" class="alert-form">
+        <label><span>Product</span>
+          <select [(ngModel)]="selectedProductId" name="selectedProductId" required>
+            <option [ngValue]="null">Select product</option>
+            <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }}</option>
+          </select>
+        </label>
+        <label><span>Threshold</span><input type="number" [(ngModel)]="threshold" name="threshold" placeholder="Minimum stock level" required /></label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Set Alert</button>
+        </div>
+        <p class="status" *ngIf="message" [class.ok]="message.includes('configured')" [class.err]="!message.includes('configured')">{{ message }}</p>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top: 16px;">
+    <div class="panel-head">
+      <span>Active alerts</span>
+    </div>
+    <div class="panel-body">
+      <div class="table-wrap stagger-target">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Current Stock</th><th>Threshold</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of alerts" class="stagger-item">
+              <td>{{ a.productName }}</td>
+              <td><span class="badge" [class.badge-danger]="a.currentStock < a.threshold" [class.badge-teal]="a.currentStock >= a.threshold">{{ a.currentStock }}</span></td>
+              <td>{{ a.threshold }}</td>
+              <td>{{ a.alertDate | date:'short' }}</td>
+            </tr>
+            <tr *ngIf="alerts.length === 0">
+              <td colspan="4" class="empty">No active alerts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
