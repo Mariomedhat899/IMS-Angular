@@ -5,7 +5,7 @@ import { catchError, tap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { LoginRequest, LoginResponse, Product, Category, Transaction, Payment, InventoryReport, Alert } from '../models/ims.models';
 
-export const API_BASE = 'http://imsapp.runasp.net';
+export const API_BASE = 'https://imsapp.runasp.net';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
