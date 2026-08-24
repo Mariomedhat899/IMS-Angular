@@ -45,7 +45,9 @@
               <td>{{ a.alertDate | date:'short' }}</td>
             </tr>
             <tr *ngIf="alerts.length === 0">
-              <td colspan="4" class="empty">No active alerts.</td>
+              <td colspan="4">
+                <app-empty-state title="No alerts yet." description="All stock levels look healthy." />
+              </td>
             </tr>
           </tbody>
         </table>

@@ -6,11 +6,13 @@ import { ApiService } from '../../core/services/api.service';
 import { Alert, Product } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 
 @Component({
   selector: 'app-alerts',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent],
   templateUrl: './alerts.component.html',
   styleUrls: ['./alerts.component.css']
 })
@@ -23,30 +25,24 @@ export class AlertsComponent implements AfterViewInit {
   messageColor = 'var(--brick)';
   okColor = 'var(--teal)';
   errColor = 'var(--brick)';
+  loadError = '';
 
-  constructor(public api: ApiService, private stagger: StaggerService, private toast: ToastService, private cdr: ChangeDetectorRef) {}
+  constructor(public api: ApiService, private stagger: StaggerService, private toast: ToastService, private cdr: ChangeDetectorRef, private cache: DashboardCacheService) {}
 
-  ngOnInit() {
-    this.load();
-  }
-
-  ngAfterViewInit() {
-    this.stagger.animate('tbody tr.stagger-item');
-  }
-
-  load() {
-    this.api.getAlerts().subscribe({ 
+  ngOnInit(): void {
+    this.cache.alerts$.subscribe({
       next: list => {
         this.alerts = list ?? [];
         this.cdr.markForCheck();
         this.stagger.animate('tbody tr.stagger-item');
       },
-      error: err => {
+      error: () => {
         this.alerts = [];
         this.cdr.markForCheck();
       }
     });
-    this.api.getProducts().subscribe({ 
+
+    this.cache.products$.subscribe({
       next: list => {
         this.products = list ?? [];
         this.cdr.markForCheck();
@@ -56,6 +52,17 @@ export class AlertsComponent implements AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+
+    this.cache.error$.subscribe(err => {
+      if (err) {
+        this.loadError = err;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  ngAfterViewInit() {
+    this.stagger.animate('tbody tr.stagger-item');
   }
 
   set() {
@@ -68,7 +75,6 @@ export class AlertsComponent implements AfterViewInit {
     this.api.setAlert({ productId: this.selectedProductId, threshold: this.threshold }).subscribe({
       next: () => {
         this.toast.show('Alert configured.', 'success');
-        this.load();
       },
       error: (err) => {
         this.toast.showError(err, 'Failed to configure alert.');

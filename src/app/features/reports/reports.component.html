@@ -50,8 +50,7 @@
     </div>
   </div>
 
-  <div class="empty-state" *ngIf="!loading && !loadError && !report?.topSellingProducts?.length">
-    <div class="empty-icon" aria-hidden="true"></div>
-    <span>No top products yet.</span>
+  <div *ngIf="!loading && !loadError && !report?.topSellingProducts?.length">
+    <app-empty-state title="No top products yet." description="Sales data will appear here." />
   </div>
 </div>
