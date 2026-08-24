@@ -19,6 +19,8 @@ export class LayoutComponent implements AfterViewInit, OnDestroy {
   private cleanup?: () => void;
   logoutLoading = false;
   private sub?: Subscription;
+  private lastY = 0;
+  private ticking = false;
 
   constructor(public api: ApiService, private router: Router, private cdr: ChangeDetectorRef) {
     const initial = this.router.url || '';
@@ -41,10 +43,16 @@ export class LayoutComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.playRouteTransition();
     this.initSidebarHover();
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 860px)').matches) {
+      window.addEventListener('scroll', this.onScroll, { passive: true });
+    }
   }
 
   ngOnDestroy() {
     this.cleanup?.();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this.onScroll);
+    }
   }
 
   private playRouteTransition() {
@@ -97,4 +105,24 @@ export class LayoutComponent implements AfterViewInit, OnDestroy {
   routeAnimationName(): string {
     return this.routeName;
   }
+
+  private onScroll = () => {
+    if (this.ticking) return;
+    this.ticking = true;
+    requestAnimationFrame(() => {
+      const currentY = window.scrollY || window.pageYOffset || 0;
+      const nav = document.querySelector('.mobile-nav');
+      if (!nav) {
+        this.ticking = false;
+        return;
+      }
+      if (currentY > this.lastY && currentY > 60) {
+        nav.classList.add('nav-hidden');
+      } else {
+        nav.classList.remove('nav-hidden');
+      }
+      this.lastY = currentY;
+      this.ticking = false;
+    });
+  };
 }

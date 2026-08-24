@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, of, BehaviorSubject } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators';
+import { catchError, tap, map, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, Product, Category, Transaction, Payment, InventoryReport, Alert } from '../models/ims.models';
+import { DashboardCacheService } from './dashboard-cache.service';
 
-export const API_BASE = 'https://imsapp.runasp.net';
+const API_BASE = environment.apiBaseUrl;
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -22,7 +24,7 @@ export class ApiService {
   get userEmail(): string | null { return this.emailSubject.value; }
   get userRole(): string | null { return this.roleSubject.value; }
 
-  constructor(http: HttpClient, router: Router) {
+  constructor(http: HttpClient, router: Router, private cache: DashboardCacheService) {
     this.http = http;
     this.router = router;
     const saved = localStorage.getItem('ims_token');
@@ -55,13 +57,13 @@ export class ApiService {
   login(payload: LoginRequest) {
     return this.http.post<LoginResponse>(`${API_BASE}/api/Auth/Login`, payload).pipe(
       tap(res => {
-        this.tokenSubject.next(res.Token);
-        localStorage.setItem('ims_token', res.Token);
-        if (res.Email) {
-          this.emailSubject.next(res.Email);
-          localStorage.setItem('ims_email', res.Email);
+        this.tokenSubject.next(res.token);
+        localStorage.setItem('ims_token', res.token);
+        if (res.email) {
+          this.emailSubject.next(res.email);
+          localStorage.setItem('ims_email', res.email);
         }
-        const role = Array.isArray(res.Roles) && res.Roles.length ? res.Roles[0] : 'Admin';
+        const role = Array.isArray(res.roles) && res.roles.length ? res.roles[0] : 'Admin';
         this.roleSubject.next(role);
         localStorage.setItem('ims_role', role);
       }),
@@ -77,18 +79,21 @@ export class ApiService {
 
   createProduct(payload: { name: string; description?: string; price: number; quantityInStock: number; supplier?: string; categoryId: number }) {
     return this.http.post<Product>(`${API_BASE}/api/Products`, payload, { headers: this.authHeaders() }).pipe(
+      tap(created => this.cache.updateAfterCreate('products', created)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
 
   updateProduct(id: number, payload: { name: string; description?: string; price: number; quantityInStock: number; supplier?: string; categoryId: number }) {
     return this.http.put<Product>(`${API_BASE}/api/Products/${id}`, payload, { headers: this.authHeaders() }).pipe(
+      tap(updated => this.cache.updateAfterUpdate('products', updated)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
 
   deleteProduct(id: number) {
     return this.http.delete(`${API_BASE}/api/Products/${id}`, { headers: this.authHeaders() }).pipe(
+      tap(() => this.cache.updateAfterDelete('products', id)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
@@ -101,18 +106,21 @@ export class ApiService {
 
   createCategory(payload: { name: string; description?: string }) {
     return this.http.post<Category>(`${API_BASE}/api/Categories`, payload, { headers: this.authHeaders() }).pipe(
+      tap(created => this.cache.updateAfterCreate('categories', created)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
 
   updateCategory(id: number, payload: { name: string; description?: string }) {
     return this.http.put<Category>(`${API_BASE}/api/Categories/${id}`, payload, { headers: this.authHeaders() }).pipe(
+      tap(updated => this.cache.updateAfterUpdate('categories', updated)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
 
   deleteCategory(id: number) {
     return this.http.delete(`${API_BASE}/api/Categories/${id}`, { headers: this.authHeaders() }).pipe(
+      tap(() => this.cache.updateAfterDelete('categories', id)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
@@ -125,6 +133,7 @@ export class ApiService {
 
   createTransaction(tx: { productId: number; quantity: number; type: string }) {
     return this.http.post<Transaction>(`${API_BASE}/api/Transactions`, tx, { headers: this.authHeaders() }).pipe(
+      tap(created => this.cache.updateAfterCreate('transactions', created)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
@@ -137,18 +146,21 @@ export class ApiService {
 
   createPayment(payload: { amount: number; paymentMethod: string; transactionReference: string }) {
     return this.http.post<Payment>(`${API_BASE}/api/Payments`, payload, { headers: this.authHeaders() }).pipe(
+      tap(created => this.cache.updateAfterCreate('payments', created)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
 
   updatePayment(id: number, payload: { amount: number; status: string; paymentMethod: string; transactionReference: string }) {
     return this.http.put<Payment>(`${API_BASE}/api/Payments/${id}`, payload, { headers: this.authHeaders() }).pipe(
+      tap(updated => this.cache.updateAfterUpdate('payments', updated)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
 
   deletePayment(id: number) {
     return this.http.delete(`${API_BASE}/api/Payments/${id}`, { headers: this.authHeaders() }).pipe(
+      tap(() => this.cache.updateAfterDelete('payments', id)),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
@@ -167,6 +179,7 @@ export class ApiService {
 
   setAlert(payload: { productId: number; threshold: number }) {
     return this.http.post(`${API_BASE}/api/LowStockAlerts`, payload, { headers: this.authHeaders() }).pipe(
+      tap(() => this.cache.refreshSection(this, 'alerts').subscribe()),
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }

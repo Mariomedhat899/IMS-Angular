@@ -11,7 +11,7 @@ import { ToastService, Toast } from '../../core/services/toast.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="toast-host">
-      <div *ngFor="let t of toasts" class="toast">
+      <div *ngFor="let t of toasts" class="toast" [class.toast-success]="t.type === 'success'" [class.toast-error]="t.type === 'error'">
         <span class="toast-icon" [innerHTML]="safeIcon(t.iconSvg)" aria-hidden="true"></span>
         <span class="toast-message">{{ t.message }}</span>
       </div>

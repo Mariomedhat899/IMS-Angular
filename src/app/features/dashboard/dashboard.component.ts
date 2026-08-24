@@ -1,18 +1,21 @@
-import { Component, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, ChangeDetectorRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { Product, Alert } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
+import { ToastService } from '../../core/services/toast.service';
+import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements AfterViewInit {
+export class DashboardComponent implements AfterViewInit, OnDestroy {
   products: Product[] = [];
   categories: any[] = [];
   alerts: Alert[] = [];
@@ -24,10 +27,71 @@ export class DashboardComponent implements AfterViewInit {
   lowStockCount = 0;
   stockValue = 0;
 
-  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private stagger: StaggerService) {}
+  private router = inject(Router);
+  private cacheSubs = new Subscription();
+
+  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private stagger: StaggerService, private toast: ToastService, private cache: DashboardCacheService) {}
 
   ngOnInit() {
-    this.load();
+    this.cacheSubs.add(
+      this.cache.loading$.subscribe(loading => {
+        this.loading = loading;
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.error$.subscribe(err => {
+        this.loadError = err ?? '';
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.products$.subscribe(list => {
+        this.products = list ?? [];
+        this.productCount = this.products.length;
+        this.stockValue = this.products.reduce((s, p) => s + (p.price * p.quantityInStock), 0);
+        this.lowStockCount = this.products.filter(p => p.quantityInStock < 10).length;
+        this.cdr.markForCheck();
+        this.stagger.animate('.stat-card.stagger-item');
+        this.stagger.animate('tbody tr.stagger-item');
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.categories$.subscribe(list => {
+        this.categories = list ?? [];
+        this.categoryCount = this.categories.length;
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.alerts$.subscribe(list => {
+        this.alerts = (list ?? []).slice(0, 5);
+        this.cdr.markForCheck();
+        this.stagger.animate('tbody tr.stagger-item');
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.transactions$.subscribe(() => {
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.payments$.subscribe(() => {
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.cacheSubs.add(
+      this.cache.report$.subscribe(() => {
+        this.cdr.markForCheck();
+      })
+    );
   }
 
   ngAfterViewInit() {
@@ -35,48 +99,8 @@ export class DashboardComponent implements AfterViewInit {
     this.stagger.animate('tbody tr.stagger-item');
   }
 
-  load() {
-    this.loading = true;
-    this.loadError = '';
-    this.api.getProducts().subscribe({
-      next: list => {
-        this.products = list ?? [];
-        this.productCount = this.products.length;
-        this.stockValue = this.products.reduce((s, p) => s + (p.price * p.quantityInStock), 0);
-        this.lowStockCount = this.products.filter(p => p.quantityInStock < 10).length;
-        this.loading = false;
-        this.cdr.markForCheck();
-        this.stagger.animate('.stat-card.stagger-item');
-        this.stagger.animate('tbody tr.stagger-item');
-      },
-      error: err => {
-        this.loading = false;
-        this.loadError = err?.error?.message || 'Failed to load dashboard data.';
-        this.cdr.markForCheck();
-      }
-    });
-    this.api.getCategories().subscribe({
-      next: list => {
-        this.categories = list ?? [];
-        this.categoryCount = this.categories.length;
-        this.cdr.markForCheck();
-      },
-      error: err => {
-        this.categoryCount = 0;
-        this.cdr.markForCheck();
-      }
-    });
-    this.api.getAlerts().subscribe({
-      next: list => {
-        this.alerts = (list ?? []).slice(0, 5);
-        this.cdr.markForCheck();
-        this.stagger.animate('tbody tr.stagger-item');
-      },
-      error: () => {
-        this.alerts = [];
-        this.cdr.markForCheck();
-      }
-    });
+  ngOnDestroy() {
+    this.cacheSubs.unsubscribe();
   }
 
   gaugePct(value: number): number {

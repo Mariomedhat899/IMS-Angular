@@ -10,8 +10,6 @@
   <div class="panel">
     <div class="panel-body">
       <div class="table-wrap stagger-target">
-        <p class="status" *ngIf="loading">Loading transactions…</p>
-        <div *ngIf="!loading">
         <table>
           <thead>
             <tr><th>Product</th><th>Type</th><th>Quantity</th><th>Total Amount</th><th>Date</th></tr>
@@ -25,13 +23,13 @@
               <td>{{ t.date | date:'short' }}</td>
             </tr>
             <tr *ngIf="transactions.length === 0">
-              <td colspan="5" class="empty">No transactions yet.</td>
+              <td colspan="5">
+                <app-empty-state title="No transactions yet." description="Activity will appear here." />
+              </td>
             </tr>
           </tbody>
         </table>
         <p class="status err" *ngIf="message">{{ message }}</p>
-        <button class="btn btn-outline" *ngIf="message" (click)="load()">Retry</button>
-        </div>
       </div>
     </div>
   </div>

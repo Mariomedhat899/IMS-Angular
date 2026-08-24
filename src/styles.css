@@ -171,7 +171,7 @@ table { border-collapse: collapse; width: 100%; }
 }
 .panel-body { padding: 0; }
 .panel-body .table-wrap { overflow: auto; max-height: 520px; }
-.panel-body table { font-size: 13px; }
+.panel-body table { font-size: 13px; width: 100%; }
 .panel-body th, .panel-body td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .panel-body thead th { background: var(--sidebar); color: var(--sidebar-ink); font-weight: 700; position: sticky; top: 0; z-index: 1; }
 .panel-body tbody tr:hover { background: var(--bg); }
@@ -529,8 +529,6 @@ table { border-collapse: collapse; width: 100%; }
   min-height: 60px;
   padding: 16px 18px;
   border-radius: var(--radius-sm);
-  background: var(--teal-dark);
-  color: #fff;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -540,6 +538,16 @@ table { border-collapse: collapse; width: 100%; }
   animation: toastIn 280ms cubic-bezier(0.22, 1, 0.36, 1), toastPulse 1800ms ease-in-out 280ms 1;
   position: relative;
   overflow: hidden;
+}
+.toast.toast-success {
+  background: var(--teal-dark);
+  color: #fff;
+  border-left-color: var(--teal);
+}
+.toast.toast-error {
+  background: #7f1d1d;
+  color: #fff;
+  border-left-color: var(--brick);
 }
 .toast-icon {
   display: inline-flex;

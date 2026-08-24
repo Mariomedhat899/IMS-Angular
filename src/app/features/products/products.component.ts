@@ -1,16 +1,18 @@
-import { Component, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
 import { Product, Category } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
+import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, EmptyStateComponent],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
@@ -34,45 +36,30 @@ export class ProductsComponent implements AfterViewInit {
   deleteTargetName = '';
   private originalPayload: any = null;
 
-  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private toast: ToastService, private stagger: StaggerService) {}
+  constructor(
+    public api: ApiService,
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService,
+    private stagger: StaggerService,
+    private cache: DashboardCacheService
+  ) {}
 
-  ngOnInit() {
-    this.load();
-    this.loadCategories();
-  }
-
-  ngAfterViewInit() {
-    this.stagger.animate('tbody tr.stagger-item');
-  }
-
-  private isDirty(current: any, original: any): boolean {
-    if (!original) return true;
-    return Object.keys(current).some(key => current[key] !== original[key]);
-  }
-
-  load() {
-    this.loading = true;
-    this.loadError = '';
-    this.api.getProducts().subscribe({
+  ngOnInit(): void {
+    this.cache.products$.subscribe({
       next: list => {
         this.products = list ?? [];
         this.applyFilter();
-        this.loading = false;
         this.cdr.markForCheck();
         this.stagger.animate('tbody tr.stagger-item');
       },
-      error: err => {
-        this.loading = false;
-        this.loadError = err?.error?.message || 'Failed to load products.';
+      error: () => {
         this.products = [];
         this.filtered = [];
         this.cdr.markForCheck();
       }
     });
-  }
 
-  loadCategories() {
-    this.api.getCategories().subscribe({
+    this.cache.categories$.subscribe({
       next: cats => {
         this.categories = cats ?? [];
         this.applyFilter();
@@ -84,6 +71,15 @@ export class ProductsComponent implements AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  ngAfterViewInit() {
+    this.stagger.animate('tbody tr.stagger-item');
+  }
+
+  private isDirty(current: any, original: any): boolean {
+    if (!original) return true;
+    return Object.keys(current).some(key => current[key] !== original[key]);
   }
 
   applyFilter() {
@@ -171,12 +167,20 @@ export class ProductsComponent implements AfterViewInit {
         return;
       }
       this.api.updateProduct(this.editing.id, payload).subscribe({
-        next: () => { this.toast.show('Product updated', 'success'); this.load(); this.closeModal(); },
+        next: () => {
+          this.toast.show('Product updated', 'success');
+          this.cache.updateAfterUpdate('products', { ...this.editing, ...payload } as Product);
+          this.closeModal();
+        },
         error: (err) => this.toast.showError(err, 'Update failed.')
       });
     } else {
       this.api.createProduct(payload).subscribe({
-        next: () => { this.toast.show('Product added', 'success'); this.load(); this.closeModal(); },
+        next: () => {
+          this.toast.show('Product added', 'success');
+          this.cache.updateAfterCreate('products', payload as Product);
+          this.closeModal();
+        },
         error: (err) => this.toast.showError(err, 'Create failed.')
       });
     }
@@ -200,7 +204,10 @@ export class ProductsComponent implements AfterViewInit {
     const id = this.deleteTargetId;
     this.closeDelete();
     this.api.deleteProduct(id).subscribe({
-      next: () => { this.toast.show('Product deleted', 'success'); this.load(); },
+      next: () => {
+        this.toast.show('Product deleted', 'success');
+        this.cache.updateAfterDelete('products', id);
+      },
       error: (err: any) => this.toast.showError(err, 'Delete failed.')
     });
   }
@@ -238,7 +245,19 @@ export class ProductsComponent implements AfterViewInit {
         this.api.importProductsCsv(csv).subscribe({
           next: () => {
             this.toast.show('CSV import completed.', 'success');
-            this.load();
+            this.loading = true;
+            this.loadError = '';
+            this.cache.refreshSection(this.api, 'products').subscribe({
+              next: () => {
+                this.loading = false;
+                this.cdr.markForCheck();
+              },
+              error: (err: any) => {
+                this.loading = false;
+                this.loadError = err?.error?.message || 'Failed to import products.';
+                this.cdr.markForCheck();
+              }
+            });
           },
           error: (err: any) => this.toast.showError(err, 'Import failed.')
         });

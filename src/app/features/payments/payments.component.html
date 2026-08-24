@@ -26,7 +26,9 @@
               </td>
             </tr>
             <tr *ngIf="payments.length === 0">
-              <td colspan="6" class="empty">No payments.</td>
+              <td colspan="6">
+                <app-empty-state title="No payments yet." description="Activity will appear here." />
+              </td>
             </tr>
           </tbody>
         </table>

@@ -15,7 +15,7 @@
       <div class="table-wrap stagger-target" *ngIf="!loading && !loadError">
         <table>
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>API key</th><th></th></tr>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Phone</th><th>API key</th><th>Expires</th><th></th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let u of managedUsers" class="clickable stagger-item" (click)="isSuperAdmin && edit(u)">
@@ -38,7 +38,6 @@
                     <span class="muted">{{ keyStatus(u).meta }}</span>
                   </div>
                   <div class="api-key-meta" *ngIf="u.apiKey?.expiresAt">
-                    <span class="muted">{{ u.apiKey?.expiresAt | date:'short' }}</span>
                     <button class="btn btn-ghost edit" *ngIf="isSuperAdmin" (click)="$event.stopPropagation(); editKeyExpiry(u)">Edit</button>
                   </div>
                   <div class="expired-note" *ngIf="keyStatus(u).class==='danger' && keyStatus(u).text==='Expired'">
@@ -46,13 +45,17 @@
                   </div>
                 </div>
               </td>
+              <td class="expires-cell">
+                <span *ngIf="u.apiKey?.expiresAt as expires">{{ expires | date:'short' }}</span>
+                <ng-template #noExpiry>—</ng-template>
+              </td>
               <td class="actions">
                 <button class="btn btn-ghost" *ngIf="isSuperAdmin" (click)="$event.stopPropagation(); openProvision(u)">Provision</button>
                 <button class="btn btn-delete" *ngIf="isSuperAdmin" (click)="$event.stopPropagation(); remove(u.id)">Delete</button>
               </td>
             </tr>
             <tr *ngIf="managedUsers.length === 0">
-              <td colspan="6" class="empty">No managed users found. Use Settings to manage your own password.</td>
+              <td colspan="7" class="empty">No managed users found. Use Settings to manage your own password.</td>
             </tr>
           </tbody>
         </table>

@@ -4,10 +4,10 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  Token: string;
-  Email: string;
-  Roles: string[];
-  Expiration: string;
+  token: string;
+  email: string;
+  roles: string[];
+  expiration: string;
 }
 
 export interface Product {
@@ -18,6 +18,7 @@ export interface Product {
   quantityInStock: number;
   supplier?: string;
   categoryId: number;
+  categoryName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -81,4 +82,13 @@ export interface ApiUser {
   id: string;
   email: string;
   roles: string[];
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  fullName?: string;
+  phoneNumber?: string;
+  roles: string[];
+  apiKey?: { isActive?: boolean; expiresAt?: string };
 }

@@ -5,11 +5,13 @@ import { ApiService } from '../../core/services/api.service';
 import { Payment } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
 import { ToastService } from '../../core/services/toast.service';
+import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EmptyStateComponent],
   templateUrl: './payments.component.html',
   styleUrls: ['./payments.component.css']
 })
@@ -26,11 +28,29 @@ export class PaymentsComponent implements AfterViewInit {
   showModal = false;
   editingId: number | null = null;
   private originalPayment: Payment | null = null;
+  loadError = '';
 
-  constructor(public api: ApiService, private stagger: StaggerService, private cdr: ChangeDetectorRef, private toast: ToastService) {}
+  constructor(public api: ApiService, private stagger: StaggerService, private cdr: ChangeDetectorRef, private toast: ToastService, private cache: DashboardCacheService) {}
 
-  ngOnInit() {
-    this.load();
+  ngOnInit(): void {
+    this.cache.payments$.subscribe({
+      next: list => {
+        this.payments = list ?? [];
+        this.cdr.markForCheck();
+        this.stagger.animate('tbody tr.stagger-item');
+      },
+      error: () => {
+        this.payments = [];
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.cache.error$.subscribe(err => {
+      if (err) {
+        this.loadError = err;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -40,16 +60,6 @@ export class PaymentsComponent implements AfterViewInit {
   private isDirty(current: any, original: any): boolean {
     if (!original) return true;
     return Object.keys(current).some(key => current[key] !== original[key]);
-  }
-
-  load() {
-    this.api.getPayments().subscribe({ 
-      next: list => {
-        this.payments = list;
-        this.cdr.markForCheck();
-        this.stagger.animate('tbody tr.stagger-item');
-      } 
-    });
   }
 
   save() {
@@ -71,12 +81,18 @@ export class PaymentsComponent implements AfterViewInit {
         return;
       }
       this.api.updatePayment(this.editingId, payload).subscribe({
-        next: () => { this.toast.show('Payment updated.', 'success'); this.closeModal(); this.load(); },
+        next: () => {
+          this.toast.show('Payment updated.', 'success');
+          this.closeModal();
+        },
         error: (err) => { this.toast.showError(err, 'Update failed.'); }
       });
     } else {
       this.api.createPayment({ amount: parseFloat(this.amount), paymentMethod: this.paymentMethod.trim(), transactionReference: this.transactionReference.trim() }).subscribe({
-        next: () => { this.toast.show('Payment created.', 'success'); this.closeModal(); this.load(); },
+        next: () => {
+          this.toast.show('Payment created.', 'success');
+          this.closeModal();
+        },
         error: (err) => { this.toast.showError(err, 'Create failed.'); }
       });
     }
