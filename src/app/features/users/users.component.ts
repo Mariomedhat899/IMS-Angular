@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { StaggerService } from '../../core/services/stagger.service';
+import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
 
 interface AppUser {
   id: string;
@@ -51,10 +52,46 @@ export class UsersComponent implements AfterViewInit {
   deleteTargetName = '';
   private originalPayload: any = null;
 
-  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private toast: ToastService, private stagger: StaggerService) {}
+  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private toast: ToastService, private stagger: StaggerService, private cache: DashboardCacheService) {}
 
   ngOnInit(): void {
-    this.load();
+    this.cache.users$.subscribe({
+      next: list => {
+        const items = list ?? [];
+        this.isSuperAdmin = items.some((u: any) => u.email === 'MarioMedhat899@gmail.com' && Array.isArray(u.roles) && u.roles.includes('Admin'));
+        this.users = items.map((u: any) => ({
+          id: String(u.id ?? u.userId ?? ''),
+          email: u.email ?? '',
+          fullName: u.fullName ?? '',
+          phoneNumber: u.phoneNumber ?? '',
+          roles: Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : []),
+          apiKey: u.apiKey ? {
+            isActive: u.apiKey.isActive ?? false,
+            expiresAt: u.apiKey.expiresAt ?? u.apiKey.expiration ?? null
+          } : null
+        } as AppUser));
+        this.loading = false;
+        this.cdr.markForCheck();
+        this.stagger.animate('tbody tr.stagger-item');
+      },
+      error: () => {
+        this.users = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.cache.loading$.subscribe(loading => {
+      this.loading = loading;
+      this.cdr.markForCheck();
+    });
+
+    this.cache.error$.subscribe(err => {
+      if (err) {
+        this.loadError = err;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -90,37 +127,6 @@ export class UsersComponent implements AfterViewInit {
   provisionTitle(): string {
     const email = this.provisioningUser?.email;
     return email ? 'Edit expiry: ' + email : 'Provision API key';
-  }
-
-  load(): void {
-    this.loading = true;
-    this.loadError = '';
-    this.api.getUsers().subscribe({
-      next: (res: any) => {
-        const items = (res ?? []);
-        this.isSuperAdmin = items.some((u: any) => u.email === 'MarioMedhat899@gmail.com' && Array.isArray(u.roles) && u.roles.includes('Admin'));
-        this.users = items.map((u: any) => ({
-          id: String(u.id ?? u.userId ?? ''),
-          email: u.email ?? '',
-          fullName: u.fullName ?? '',
-          phoneNumber: u.phoneNumber ?? '',
-          roles: Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : []),
-          apiKey: u.apiKey ? {
-            isActive: u.apiKey.isActive ?? false,
-            expiresAt: u.apiKey.expiresAt ?? u.apiKey.expiration ?? null
-          } : null
-        } as AppUser));
-        this.loading = false;
-        this.cdr.markForCheck();
-        this.stagger.animate('tbody tr.stagger-item');
-      },
-      error: err => {
-        this.loading = false;
-        this.loadError = err?.error?.message || 'Failed to load users.';
-        this.users = [];
-        this.cdr.markForCheck();
-      }
-    });
   }
 
   addNew(): void {
@@ -209,12 +215,11 @@ export class UsersComponent implements AfterViewInit {
           const createdId = created?.id ?? created?.userId;
           if (createdId && this.apiKeyExpiry) {
             this.api.provisionUser(String(createdId), { expiresAtUtc: new Date(this.apiKeyExpiry).toISOString() }).subscribe({
-              next: () => { this.closeModal(); this.load(); },
-              error: (err: any) => { this.toast.showError(err, 'User created, but key provisioning failed.'); this.closeModal(); this.load(); }
+              next: () => { this.closeModal(); },
+              error: (err: any) => { this.toast.showError(err, 'User created, but key provisioning failed.'); this.closeModal(); }
             });
           } else {
             this.closeModal();
-            this.load();
           }
         },
         error: (err: any) => this.toast.showError(err, 'Create failed.')
@@ -225,11 +230,10 @@ export class UsersComponent implements AfterViewInit {
         return;
       }
       this.api.updateUser(this.editing.id, payload).subscribe({
-        next: () => { 
-          this.toast.show('User updated.', 'success'); 
-          this.closeModal(); 
+        next: () => {
+          this.toast.show('User updated.', 'success');
+          this.closeModal();
           this.cdr.markForCheck();
-          setTimeout(() => this.load(), 60); 
         },
         error: (err: any) => this.toast.showError(err, 'Update failed.')
       });
@@ -243,8 +247,8 @@ export class UsersComponent implements AfterViewInit {
     if (!trimmed) return this.setMessage('Expiry datetime is required.', this.errColor);
 
     this.api.provisionUser(this.provisioningUser.id, { expiresAtUtc: new Date(trimmed).toISOString() }).subscribe({
-      next: () => { this.toast.show('API key saved.', 'success'); this.closeProvision(); this.load(); },
-      error: (err: any) => this.toast.showError(err, 'Save failed.')
+      next: () => { this.toast.show('API key saved.', 'success'); this.closeProvision(); },
+      error: (err: any) => { this.toast.showError(err, 'Save failed.'); this.closeProvision(); }
     });
   }
 
@@ -273,8 +277,8 @@ export class UsersComponent implements AfterViewInit {
     const id = this.deleteTargetId;
     this.closeDelete();
     this.api.deleteUser(id).subscribe({
-      next: () => { this.toast.show('User deleted.', 'success'); this.load(); },
-      error: (err: any) => this.toast.showError(err, 'Delete failed.')
+      next: () => { this.toast.show('User deleted.', 'success'); },
+      error: (err: any) => { this.toast.showError(err, 'Delete failed.'); }
     });
   }
 
