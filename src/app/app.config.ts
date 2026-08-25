@@ -19,7 +19,7 @@ export const appConfig: ApplicationConfig = {
           }
 
           const cloned = req.clone({
-            setHeaders: { Authorization: `Bearer ${token}` }
+            setHeaders: { Authorization: 'Bearer ' + token }
           });
 
           return next(cloned).pipe(
