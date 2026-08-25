@@ -56,6 +56,12 @@ export class CategoriesComponent implements AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+
+    if (!this.categories.length) {
+      this.cache.reloadAll(this.api).subscribe({
+        error: () => this.toast.show('We couldn’t refresh categories. The list may appear empty until you navigate back.', 'error')
+      });
+    }
   }
 
   ngAfterViewInit() {

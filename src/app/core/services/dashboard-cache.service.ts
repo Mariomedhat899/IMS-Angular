@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, forkJoin, Observable, of } from 'rxjs';
-import { catchError, finalize, tap } from 'rxjs/operators';
+import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Product, Category, Transaction, Payment, InventoryReport, Alert, AppUser } from '../models/ims.models';
 
@@ -125,11 +125,11 @@ export class DashboardCacheService {
     }
   }
 
-  reloadAll(api: ApiService): void {
+  reloadAll(api: ApiService): Observable<any> {
     this.loadingSubject.next(true);
     this.errorSubject.next(null);
 
-    forkJoin({
+    return forkJoin({
       products: api.getProducts().pipe(catchError(() => of([]))),
       categories: api.getCategories().pipe(catchError(() => of([]))),
       transactions: api.getTransactions().pipe(catchError(() => of([]))),
@@ -137,8 +137,8 @@ export class DashboardCacheService {
       alerts: api.getAlerts().pipe(catchError(() => of([]))),
       report: api.getReport().pipe(catchError(() => of(null))),
       users: this.loadUsers(api).pipe(catchError(() => of([])))
-    }).subscribe({
-      next: data => {
+    }).pipe(
+      tap(data => {
         this.productsSubject.next(data.products ?? []);
         this.categoriesSubject.next(data.categories ?? []);
         this.transactionsSubject.next(data.transactions ?? []);
@@ -146,10 +146,10 @@ export class DashboardCacheService {
         this.alertsSubject.next(data.alerts ?? []);
         this.reportSubject.next(data.report ?? null);
         this.usersSubject.next(data.users ?? []);
-        this.loadingSubject.next(false);
-      },
-      error: () => this.loadingSubject.next(false)
-    });
+      }),
+      catchError(() => of(void 0)),
+      finalize(() => this.loadingSubject.next(false))
+    );
   }
 
   loadUsers(api: ApiService): Observable<AppUser[]> {

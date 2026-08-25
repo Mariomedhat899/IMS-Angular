@@ -61,6 +61,12 @@ export class TransactionsComponent implements AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+
+    if (!this.transactions.length) {
+      this.cache.reloadAll(this.api).subscribe({
+        error: () => this.toast.show('We couldn’t refresh activity. The list may appear empty until you navigate back.', 'error')
+      });
+    }
   }
 
   ngAfterViewInit() {

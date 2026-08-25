@@ -4,6 +4,7 @@ import { ApiService } from '../../core/services/api.service';
 import { InventoryReport } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
 import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { ToastService } from '../../core/services/toast.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 
 @Component({
@@ -18,7 +19,7 @@ export class ReportsComponent implements AfterViewInit {
   loading = false;
   loadError = '';
 
-  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private stagger: StaggerService, private cache: DashboardCacheService) {}
+  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private stagger: StaggerService, private cache: DashboardCacheService, private toast: ToastService) {}
 
   ngOnInit(): void {
     this.cache.report$.subscribe({
@@ -47,6 +48,12 @@ export class ReportsComponent implements AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+
+    if (!this.report) {
+      this.cache.reloadAll(this.api).subscribe({
+        error: () => this.toast.show('We couldn’t refresh the report. Some figures may appear empty until you navigate back.', 'error')
+      });
+    }
   }
 
   ngAfterViewInit() {

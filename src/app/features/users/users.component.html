@@ -93,7 +93,7 @@
                 <option value="Staff">Staff</option>
               </select>
             </label>
-            <label *ngIf="adding"><span>Password</span><input [(ngModel)]="password" name="password" type="text" placeholder="Leave blank for random" /></label>
+            <label *ngIf="adding"><span>Password</span><input [(ngModel)]="password" name="password" type="text" placeholder="Required" required /></label>
             <label class="full" *ngIf="adding"><span>API key expiry</span><input type="datetime-local" [(ngModel)]="apiKeyExpiry" name="apiKeyExpiry" placeholder="Optional" /></label>
           </div>
           <div class="form-actions">

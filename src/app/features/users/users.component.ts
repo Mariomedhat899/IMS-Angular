@@ -93,6 +93,12 @@ export class UsersComponent implements AfterViewInit {
         this.cdr.markForCheck();
       }
     });
+
+    if (!this.users.length) {
+      this.cache.reloadAll(this.api).subscribe({
+        error: () => this.toast.show('We couldn’t refresh users. The list may appear empty until you navigate back.', 'error')
+      });
+    }
   }
 
   ngAfterViewInit() {
