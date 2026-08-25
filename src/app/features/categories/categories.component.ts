@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Category } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
+import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { Category } from '../../core/models/ims.models';
+import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EmptyStateComponent],
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.css']
 })
@@ -26,10 +28,34 @@ export class CategoriesComponent implements AfterViewInit {
   deleteTargetName = '';
   private originalCategory: Category | null = null;
 
-  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private toast: ToastService, private stagger: StaggerService) {}
+  constructor(public api: ApiService, private cdr: ChangeDetectorRef, private toast: ToastService, private stagger: StaggerService, private cache: DashboardCacheService) {}
 
-  ngOnInit() {
-    this.load();
+  ngOnInit(): void {
+    this.cache.categories$.subscribe({
+      next: list => {
+        this.categories = list ?? [];
+        this.loading = false;
+        this.cdr.markForCheck();
+        this.stagger.animate('tbody tr.stagger-item');
+      },
+      error: () => {
+        this.categories = [];
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.cache.loading$.subscribe(loading => {
+      this.loading = loading;
+      this.cdr.markForCheck();
+    });
+
+    this.cache.error$.subscribe(err => {
+      if (err) {
+        this.loadError = err;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -41,26 +67,7 @@ export class CategoriesComponent implements AfterViewInit {
     return Object.keys(current).some(key => current[key] !== original[key]);
   }
 
-  load() {
-    this.loading = true;
-    this.loadError = '';
-    this.api.getCategories().subscribe({
-      next: list => {
-        this.categories = list ?? [];
-        this.loading = false;
-        this.cdr.markForCheck();
-        this.stagger.animate('tbody tr.stagger-item');
-      },
-      error: err => {
-        this.loading = false;
-        this.loadError = err?.error?.message || 'Failed to load categories.';
-        this.categories = [];
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  addNew() {
+  addNew(): void {
     this.showModal = true;
     this.editing = null;
     this.name = '';
@@ -68,7 +75,7 @@ export class CategoriesComponent implements AfterViewInit {
     this.originalCategory = null;
   }
 
-  edit(c: Category) {
+  edit(c: Category): void {
     this.showModal = true;
     this.editing = c;
     this.name = c.name;
@@ -76,14 +83,14 @@ export class CategoriesComponent implements AfterViewInit {
     this.originalCategory = { ...c };
   }
 
-  closeModal() {
+  closeModal(): void {
     this.showModal = false;
     this.editing = null;
     this.name = '';
     this.description = '';
   }
 
-  save() {
+  save(): void {
     if (!this.name.trim()) return this.toast.show('Name is required.', 'error');
     const payload = { name: this.name.trim(), description: this.description.trim() || undefined };
     if (this.editing && this.editing.id) {
@@ -92,18 +99,26 @@ export class CategoriesComponent implements AfterViewInit {
         return;
       }
       this.api.updateCategory(this.editing.id, payload).subscribe({
-        next: () => { this.toast.show('Category updated', 'success'); this.load(); this.closeModal(); },
+        next: () => {
+          this.toast.show('Category updated', 'success');
+          this.cache.updateAfterUpdate('categories', { ...this.editing, ...payload } as Category);
+          this.closeModal();
+        },
         error: (err) => this.toast.showError(err, 'Update failed.')
       });
     } else {
       this.api.createCategory(payload).subscribe({
-        next: () => { this.toast.show('Category added', 'success'); this.load(); this.closeModal(); },
+        next: () => {
+          this.toast.show('Category added', 'success');
+          this.cache.updateAfterCreate('categories', payload as Category);
+          this.closeModal();
+        },
         error: (err) => this.toast.showError(err, 'Create failed.')
       });
     }
   }
 
-  remove(id: number) {
+  remove(id: number): void {
     const category = this.categories.find(c => c.id === id);
     this.deleteTargetId = id;
     this.deleteTargetName = category?.name || 'this category';
@@ -121,7 +136,10 @@ export class CategoriesComponent implements AfterViewInit {
     const id = this.deleteTargetId;
     this.closeDelete();
     this.api.deleteCategory(id).subscribe({
-      next: () => { this.toast.show('Category deleted', 'success'); this.load(); },
+      next: () => {
+        this.toast.show('Category deleted', 'success');
+        this.cache.updateAfterDelete('categories', id);
+      },
       error: (err: any) => this.toast.showError(err, 'Delete failed.')
     });
   }

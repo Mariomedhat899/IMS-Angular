@@ -9,7 +9,7 @@
 
   <div class="panel">
     <div class="panel-body">
-      <div class="table-wrap stagger-target" *ngIf="!loading && !loadError">
+      <div class="table-wrap" *ngIf="!loading && !loadError">
         <table>
           <thead>
             <tr><th>Name</th><th>Description</th><th>Products</th><th></th></tr>
@@ -24,12 +24,14 @@
               </td>
             </tr>
             <tr *ngIf="categories.length === 0">
-              <td colspan="4" class="empty">No categories yet.</td>
+              <td colspan="4">
+                <app-empty-state title="No categories yet." description="Start by adding a new category." />
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="empty-state" *ngIf="loading && !loadError">Loading categories...</div>
+      <app-empty-state *ngIf="loading && !loadError" title="Loading categories..." description="" />
       <div class="empty-state error" *ngIf="loadError">{{ loadError }}</div>
     </div>
   </div>
