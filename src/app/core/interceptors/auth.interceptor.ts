@@ -17,7 +17,6 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
   return next(cloned).pipe(
     catchError(err => {
       if (err.status === 401) {
-        // Invalid token - clear auth state and let component handle navigation
         localStorage.removeItem('ims_token');
         localStorage.removeItem('ims_email');
         localStorage.removeItem('ims_role');

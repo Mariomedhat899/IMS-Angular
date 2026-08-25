@@ -176,7 +176,9 @@ table { border-collapse: collapse; width: 100%; }
 .panel-body .table-wrap { overflow: auto; max-height: 520px; }
 .panel-body table { font-size: 13px; width: 100%; }
 .panel-body th, .panel-body td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-.panel-body thead th { background: linear-gradient(180deg, #1c2321 0%, var(--sidebar) 100%); color: var(--sidebar-ink); font-weight: 700; position: sticky; top: 0; z-index: 1; letter-spacing: 0.02em; border-bottom: 2px solid var(--teal); box-shadow: inset 0 -1px 0 rgba(31, 111, 99, 0.35); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+.panel-body thead th { background: linear-gradient(180deg, #1c2321 0%, var(--sidebar) 100%); color: var(--sidebar-ink); font-weight: 700; position: sticky; top: 0; z-index: 1; letter-spacing: 0.02em; box-shadow: 0 2px 8px rgba(0,0,0,0.25); text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+.panel-body thead th:first-child { border-top-left-radius: var(--radius-md); }
+.panel-body thead th:last-child { border-top-right-radius: var(--radius-md); }
 .panel-body tbody tr:hover { background: var(--bg); }
 .panel-body .empty { text-align: center; color: var(--muted); padding: 18px; }
 .empty-state { text-align: center; color: var(--muted); padding: 24px; font-size: 14px; }
