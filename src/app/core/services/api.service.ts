@@ -215,7 +215,7 @@ export class ApiService {
   }
 
   getUsers() {
-    return this.http.get<ApiUser[]>(`${API_BASE}/api/users`, { headers: this.authHeaders() }).pipe(
+    return this.http.get<ApiUser[]>(`${API_BASE}/api/Users`, { headers: this.authHeaders() }).pipe(
       catchError(err => { if (err.status === 401) this.logout(); return throwError(() => err); })
     );
   }
