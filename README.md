@@ -1,27 +1,70 @@
-# IMSAngularFrontend
+# IMS-Angular-Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.1.0.
+Angular 16 standalone frontend for the Inventory Management System. Built with TypeScript, RxJS, and a design-token CSS system. Uses a centralized dashboard cache, unified empty states, and pure-CSS/WAAPI animations.
 
-## Development server
+---
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Tech Stack
 
-## Code scaffolding
+- Angular 16 standalone components
+- TypeScript
+- RxJS
+- CSS custom properties / design tokens
+- Pure CSS keyframes + native `Element.animate()` for stagger effects
+- No GSAP
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Features
 
-## Build
+- Dashboard cache service for DRY data loading
+- Unified `app-empty-state` component across all sections
+- Animated background blobs on all routes
+- Responsive mobile bottom nav with icon-only mode under 420px
+- Elevated modals with stronger shadows
+- Artistic table headers: gradient, shadow, rounded corners, full-width Payments header
+- Login/logout animated barcode loaders
+- Initial app preloader before Angular boot
+- Toast notifications with Lucide icons via `DomSanitizer`
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Getting Started
 
-## Running unit tests
+```bash
+npm install
+npx ng serve
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Open `http://localhost:4200`.
 
-## Running end-to-end tests
+## Production Build
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```bash
+npx ng build --configuration production
+```
 
-## Further help
+Output: `dist/ims-angular-frontend/`
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Deployment
+
+Frontend build is copied into the backend API `wwwroot` for hosting:
+
+```bash
+cp -r dist/ims-angular-frontend/* <backend-publish>/wwwroot/
+```
+
+Production frontend host: `https://imsapp.runasp.net`  
+Production API host: `https://ims-api.runasp.net`
+
+## Architecture Notes
+
+- `DashboardCacheService` fetches all dashboard data once after login and exposes section observables.
+- `EmptyStateComponent` is used for all empty tables.
+- Auth interceptor fallback is registered in `app.config.ts` to ensure correct `Bearer` token behavior.
+- Mobile nav switches from sidebar to bottom tab bar under 860px, with label hiding under 420px.
+
+## Demo Account
+
+- Email: `demo@ims.com`
+- Password: `Demo123!`
+
+## License
+
+Private project — all rights reserved.

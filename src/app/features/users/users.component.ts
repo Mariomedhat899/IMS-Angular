@@ -5,6 +5,7 @@ import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { StaggerService } from '../../core/services/stagger.service';
 import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 
 interface AppUser {
   id: string;
@@ -18,7 +19,7 @@ interface AppUser {
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, EmptyStateComponent],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })

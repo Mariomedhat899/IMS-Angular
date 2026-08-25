@@ -55,7 +55,12 @@
               </td>
             </tr>
             <tr *ngIf="managedUsers.length === 0">
-              <td colspan="7" class="empty">No managed users found. Use Settings to manage your own password.</td>
+              <td colspan="7">
+                <app-empty-state
+                  title="No managed users found."
+                  description="Use Settings to manage your own password."
+                ></app-empty-state>
+              </td>
             </tr>
           </tbody>
         </table>
