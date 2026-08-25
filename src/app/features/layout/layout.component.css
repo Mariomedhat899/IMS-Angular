@@ -114,7 +114,6 @@
   min-height: 100vh;
   background: var(--bg);
   position: relative;
-  overflow: hidden;
 }
 .main::before {
   content: '';
@@ -170,6 +169,7 @@
   0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
   100% { background-position: 100px -80px, -120px 90px, 80px -40px, -50px 60px, 70px -70px, -80px 40px, 110px -50px, -40px 70px; }
 }
+
 .page-transition {
   position: relative;
   z-index: 1;
