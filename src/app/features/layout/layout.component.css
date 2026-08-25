@@ -299,4 +299,28 @@
   [class*="page-tabs"] {
     display: none !important;
   }
+
+  @media (max-width: 420px) {
+    .mobile-nav {
+      gap: 0;
+      padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    }
+    .mobile-nav a,
+    .mobile-nav .mobile-nav-item {
+      padding: 8px 2px;
+      gap: 0;
+      font-size: 0;
+      border-radius: 10px;
+      min-height: 48px;
+    }
+    .mobile-nav .mobile-nav-label {
+      display: none;
+    }
+    .mobile-nav .mobile-nav-icon {
+      transform: scale(1.05);
+    }
+    .mobile-nav .mobile-nav-logout {
+      color: #fca5a5;
+    }
+  }
 }

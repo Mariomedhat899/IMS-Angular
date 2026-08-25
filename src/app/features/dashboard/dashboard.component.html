@@ -12,17 +12,17 @@
       <div class="stat-value">{{ productCount }}</div>
       <div class="stat-sub">{{ categoryCount }} categories</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stagger-item">
       <div class="stat-label">Categories</div>
       <div class="stat-value">{{ categoryCount }}</div>
       <div class="stat-sub">Grouping {{ productCount }} products</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stagger-item">
       <div class="stat-label">Low stock items</div>
       <div class="stat-value">{{ lowStockCount }}</div>
       <div class="stat-sub">{{ lowStockCount === 0 ? 'All items healthy' : 'Needs attention' }}</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stagger-item">
       <div class="stat-label">Est. stock value</div>
       <div class="stat-value">{{ stockValue | number:'1.0-0' }}</div>
       <div class="stat-sub">Price × quantity on hand</div>
@@ -55,10 +55,11 @@
           </tr>
           <tr *ngIf="alerts.length === 0">
             <td colspan="4" class="empty">
-              <div class="empty-state">
-                <div class="empty-icon" aria-hidden="true"></div>
-                <span>No active alerts.</span>
-              </div>
+              <app-empty-state
+                title="No active alerts."
+                description="All stock levels look healthy right now."
+                iconSvg="<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'></path><line x1='12' y1='9' x2='12' y2='13'></line><line x1='12' y1='17' x2='12.01' y2='17'></line></svg>">
+              </app-empty-state>
             </td>
           </tr>
         </tbody>

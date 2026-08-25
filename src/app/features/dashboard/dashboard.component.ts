@@ -6,12 +6,13 @@ import { Product, Alert } from '../../core/models/ims.models';
 import { StaggerService } from '../../core/services/stagger.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardCacheService } from '../../core/services/dashboard-cache.service';
+import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EmptyStateComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
