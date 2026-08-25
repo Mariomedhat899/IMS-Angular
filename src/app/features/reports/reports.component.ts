@@ -50,9 +50,7 @@ export class ReportsComponent implements AfterViewInit {
     });
 
     if (!this.report) {
-      this.cache.reloadAll(this.api).subscribe({
-        error: () => this.toast.show('We couldn’t refresh the report. Some figures may appear empty until you navigate back.', 'error')
-      });
+      this.cache.reloadAll(this.api);
     }
   }
 

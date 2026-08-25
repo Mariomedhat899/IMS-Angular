@@ -61,9 +61,7 @@ export class AlertsComponent implements AfterViewInit {
     });
 
     if (!this.alerts.length) {
-      this.cache.reloadAll(this.api).subscribe({
-        error: () => this.toast.show('We couldn’t refresh alerts. The list may appear empty until you navigate back.', 'error')
-      });
+      this.cache.reloadAll(this.api);
     }
   }
 

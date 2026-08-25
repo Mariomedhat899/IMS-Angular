@@ -53,9 +53,7 @@ export class PaymentsComponent implements AfterViewInit {
     });
 
     if (!this.payments.length) {
-      this.cache.reloadAll(this.api).subscribe({
-        error: () => this.toast.show('We couldn’t refresh payments. The list may appear empty until you navigate back.', 'error')
-      });
+      this.cache.reloadAll(this.api);
     }
   }
 

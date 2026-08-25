@@ -3,6 +3,7 @@ import { BehaviorSubject, forkJoin, Observable, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Product, Category, Transaction, Payment, InventoryReport, Alert, AppUser } from '../models/ims.models';
+import { Subscription } from 'rxjs';
 
 export type DashboardSection = 'products' | 'categories' | 'transactions' | 'payments' | 'alerts' | 'report' | 'users';
 
@@ -20,6 +21,7 @@ export class DashboardCacheService {
   private userRoleSubject = new BehaviorSubject<string | null>(null);
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private errorSubject = new BehaviorSubject<string | null>(null);
+  private reloadSub: Subscription | null = null;
 
   // Public observables
   products$ = this.productsSubject.asObservable();
@@ -125,11 +127,12 @@ export class DashboardCacheService {
     }
   }
 
-  reloadAll(api: ApiService): Observable<any> {
+  reloadAll(api: ApiService): void {
     this.loadingSubject.next(true);
     this.errorSubject.next(null);
 
-    return forkJoin({
+    this.reloadSub?.unsubscribe();
+    this.reloadSub = forkJoin({
       products: api.getProducts().pipe(catchError(() => of([]))),
       categories: api.getCategories().pipe(catchError(() => of([]))),
       transactions: api.getTransactions().pipe(catchError(() => of([]))),
@@ -149,7 +152,7 @@ export class DashboardCacheService {
       }),
       catchError(() => of(void 0)),
       finalize(() => this.loadingSubject.next(false))
-    );
+    ).subscribe();
   }
 
   loadUsers(api: ApiService): Observable<AppUser[]> {

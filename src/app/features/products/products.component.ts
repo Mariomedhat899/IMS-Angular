@@ -73,9 +73,7 @@ export class ProductsComponent implements AfterViewInit {
     });
 
     if (!this.products.length) {
-      this.cache.reloadAll(this.api).subscribe({
-        error: () => this.toast.show('We couldn’t refresh products. The list may appear empty until you navigate back.', 'error')
-      });
+      this.cache.reloadAll(this.api);
     }
   }
 
