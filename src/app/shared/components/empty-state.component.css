@@ -10,6 +10,7 @@
   margin: 0 auto;
   background: var(--surface);
   border: 1px solid var(--border);
+  animation: emptyStateIn 180ms var(--ease-out);
 }
 
 .empty-state-icon {
@@ -58,7 +59,7 @@
   background: var(--teal);
   color: #fff;
   border-color: var(--teal);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), color var(--transition-fast);
   font-family: inherit;
 }
 
@@ -69,4 +70,9 @@
 
 .empty-state-action:active {
   transform: scale(0.97);
+}
+
+@keyframes emptyStateIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }

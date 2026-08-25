@@ -29,6 +29,9 @@
 
   --transition-fast: 120ms ease;
   --transition: 200ms ease;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* ===== Reset & base ===== */
@@ -183,7 +186,8 @@ table { border-collapse: collapse; width: 100%; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid transparent;
-  font-size: 13px; font-weight: 600; transition: all var(--transition-fast);
+  font-size: 13px; font-weight: 600;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), color var(--transition-fast);
   position: relative; overflow: hidden;
 }
 .btn::after {
@@ -596,4 +600,25 @@ table { border-collapse: collapse; width: 100%; }
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(12px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item {
+    animation: none !important;
+    transition: none !important;
+  }
+  .modal-backdrop,
+  .toast,
+  .page-transition,
+  .stat-card,
+  .sidebar a,
+  .btn,
+  .btn-add,
+  .btn-edit,
+  .btn-delete,
+  .empty-state {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

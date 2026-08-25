@@ -82,11 +82,11 @@ export class LayoutComponent implements AfterViewInit, OnDestroy {
         this.cleanup = () => anim.cancel();
       };
       const leave = () => {
-        const anim = link.animate(
-          [{ transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
-          { duration: 250, easing: 'ease-in', fill: 'backwards' }
-        );
-        this.cleanup = () => anim.cancel();
+      const anim = link.animate(
+        [{ transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
+        { duration: 250, easing: 'ease-out', fill: 'backwards' }
+      );
+      this.cleanup = () => anim.cancel();
       };
       link.addEventListener('mouseenter', enter);
       link.addEventListener('mouseleave', leave);

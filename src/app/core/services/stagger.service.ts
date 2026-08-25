@@ -9,6 +9,7 @@ export class StaggerService {
       const items = (container || document).querySelectorAll<HTMLElement>(selector);
       if (!items.length) return;
 
+      const resolvedEasing = this.resolveEasing();
       const now = performance.now();
       items.forEach((el, idx) => {
         const delay = idx * delayStep;
@@ -20,11 +21,19 @@ export class StaggerService {
           {
             duration: 450,
             delay,
-            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            easing: resolvedEasing,
             fill: 'backwards'
           }
         );
       });
     });
+  }
+
+  private resolveEasing(): string {
+    if (typeof document === 'undefined') {
+      return 'cubic-bezier(0.23, 1, 0.32, 1)';
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim();
+    return value || 'cubic-bezier(0.23, 1, 0.32, 1)';
   }
 }
