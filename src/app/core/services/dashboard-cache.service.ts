@@ -125,6 +125,33 @@ export class DashboardCacheService {
     }
   }
 
+  reloadAll(api: ApiService): void {
+    this.loadingSubject.next(true);
+    this.errorSubject.next(null);
+
+    forkJoin({
+      products: api.getProducts().pipe(catchError(() => of([]))),
+      categories: api.getCategories().pipe(catchError(() => of([]))),
+      transactions: api.getTransactions().pipe(catchError(() => of([]))),
+      payments: api.getPayments().pipe(catchError(() => of([]))),
+      alerts: api.getAlerts().pipe(catchError(() => of([]))),
+      report: api.getReport().pipe(catchError(() => of(null))),
+      users: this.loadUsers(api).pipe(catchError(() => of([])))
+    }).subscribe({
+      next: data => {
+        this.productsSubject.next(data.products ?? []);
+        this.categoriesSubject.next(data.categories ?? []);
+        this.transactionsSubject.next(data.transactions ?? []);
+        this.paymentsSubject.next(data.payments ?? []);
+        this.alertsSubject.next(data.alerts ?? []);
+        this.reportSubject.next(data.report ?? null);
+        this.usersSubject.next(data.users ?? []);
+        this.loadingSubject.next(false);
+      },
+      error: () => this.loadingSubject.next(false)
+    });
+  }
+
   loadUsers(api: ApiService): Observable<AppUser[]> {
     return api.getUsers().pipe(
       tap(data => this.usersSubject.next(data ?? [])),

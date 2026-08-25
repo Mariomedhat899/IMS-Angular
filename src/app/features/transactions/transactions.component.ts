@@ -92,6 +92,7 @@ export class TransactionsComponent implements AfterViewInit {
         this.toast.show('Transaction added.', 'success');
         this.quantity = 1;
         this.closeModal();
+        this.cache.reloadAll(this.api);
       },
       error: (err) => { this.toast.showError(err, 'Server rejected transaction.'); }
     });

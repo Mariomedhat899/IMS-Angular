@@ -75,6 +75,7 @@ export class AlertsComponent implements AfterViewInit {
     this.api.setAlert({ productId: this.selectedProductId, threshold: this.threshold }).subscribe({
       next: () => {
         this.toast.show('Alert configured.', 'success');
+        this.cache.reloadAll(this.api);
       },
       error: (err) => {
         this.toast.showError(err, 'Failed to configure alert.');

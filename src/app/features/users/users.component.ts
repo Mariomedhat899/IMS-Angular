@@ -216,10 +216,11 @@ export class UsersComponent implements AfterViewInit {
           const createdId = created?.id ?? created?.userId;
           if (createdId && this.apiKeyExpiry) {
             this.api.provisionUser(String(createdId), { expiresAtUtc: new Date(this.apiKeyExpiry).toISOString() }).subscribe({
-              next: () => { this.closeModal(); },
-              error: (err: any) => { this.toast.showError(err, 'User created, but key provisioning failed.'); this.closeModal(); }
+              next: () => { this.cache.reloadAll(this.api); this.closeModal(); },
+              error: (err: any) => { this.toast.showError(err, 'User created, but key provisioning failed.'); this.cache.reloadAll(this.api); this.closeModal(); }
             });
           } else {
+            this.cache.reloadAll(this.api);
             this.closeModal();
           }
         },
@@ -233,6 +234,7 @@ export class UsersComponent implements AfterViewInit {
       this.api.updateUser(this.editing.id, payload).subscribe({
         next: () => {
           this.toast.show('User updated.', 'success');
+          this.cache.reloadAll(this.api);
           this.closeModal();
           this.cdr.markForCheck();
         },
@@ -278,7 +280,10 @@ export class UsersComponent implements AfterViewInit {
     const id = this.deleteTargetId;
     this.closeDelete();
     this.api.deleteUser(id).subscribe({
-      next: () => { this.toast.show('User deleted.', 'success'); },
+      next: () => {
+        this.toast.show('User deleted.', 'success');
+        this.cache.reloadAll(this.api);
+      },
       error: (err: any) => { this.toast.showError(err, 'Delete failed.'); }
     });
   }

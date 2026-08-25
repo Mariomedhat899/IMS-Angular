@@ -169,7 +169,7 @@ export class ProductsComponent implements AfterViewInit {
       this.api.updateProduct(this.editing.id, payload).subscribe({
         next: () => {
           this.toast.show('Product updated', 'success');
-          this.cache.updateAfterUpdate('products', { ...this.editing, ...payload } as Product);
+          this.cache.reloadAll(this.api);
           this.closeModal();
         },
         error: (err) => this.toast.showError(err, 'Update failed.')
@@ -178,7 +178,7 @@ export class ProductsComponent implements AfterViewInit {
       this.api.createProduct(payload).subscribe({
         next: () => {
           this.toast.show('Product added', 'success');
-          this.cache.updateAfterCreate('products', payload as Product);
+          this.cache.reloadAll(this.api);
           this.closeModal();
         },
         error: (err) => this.toast.showError(err, 'Create failed.')
@@ -206,7 +206,7 @@ export class ProductsComponent implements AfterViewInit {
     this.api.deleteProduct(id).subscribe({
       next: () => {
         this.toast.show('Product deleted', 'success');
-        this.cache.updateAfterDelete('products', id);
+        this.cache.reloadAll(this.api);
       },
       error: (err: any) => this.toast.showError(err, 'Delete failed.')
     });
@@ -244,22 +244,14 @@ export class ProductsComponent implements AfterViewInit {
         const csv = e.target.result;
         this.api.importProductsCsv(csv).subscribe({
           next: () => {
-            this.toast.show('CSV import completed.', 'success');
-            this.loading = true;
-            this.loadError = '';
-            this.cache.refreshSection(this.api, 'products').subscribe({
-              next: () => {
+                this.toast.show('CSV import completed.', 'success');
+                this.loading = true;
+                this.loadError = '';
+                this.cache.reloadAll(this.api);
                 this.loading = false;
                 this.cdr.markForCheck();
               },
-              error: (err: any) => {
-                this.loading = false;
-                this.loadError = err?.error?.message || 'Failed to import products.';
-                this.cdr.markForCheck();
-              }
-            });
-          },
-          error: (err: any) => this.toast.showError(err, 'Import failed.')
+              error: (err: any) => this.toast.showError(err, 'Import failed.')
         });
       };
       reader.readAsText(file);

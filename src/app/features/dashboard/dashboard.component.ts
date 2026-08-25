@@ -93,6 +93,14 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       })
     );
+
+    if (!this.products.length && !this.categories.length && !this.alerts.length) {
+      this.cache.loadAll(this.api).subscribe({
+        error: () => {
+          this.toast.show('We couldn’t refresh your workspace data. Some sections may appear empty until you navigate back.', 'error');
+        }
+      });
+    }
   }
 
   ngAfterViewInit() {

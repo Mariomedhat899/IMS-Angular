@@ -83,6 +83,7 @@ export class PaymentsComponent implements AfterViewInit {
       this.api.updatePayment(this.editingId, payload).subscribe({
         next: () => {
           this.toast.show('Payment updated.', 'success');
+          this.cache.reloadAll(this.api);
           this.closeModal();
         },
         error: (err) => { this.toast.showError(err, 'Update failed.'); }
@@ -91,6 +92,7 @@ export class PaymentsComponent implements AfterViewInit {
       this.api.createPayment({ amount: parseFloat(this.amount), paymentMethod: this.paymentMethod.trim(), transactionReference: this.transactionReference.trim() }).subscribe({
         next: () => {
           this.toast.show('Payment created.', 'success');
+          this.cache.reloadAll(this.api);
           this.closeModal();
         },
         error: (err) => { this.toast.showError(err, 'Create failed.'); }

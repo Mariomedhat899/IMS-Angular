@@ -101,7 +101,7 @@ export class CategoriesComponent implements AfterViewInit {
       this.api.updateCategory(this.editing.id, payload).subscribe({
         next: () => {
           this.toast.show('Category updated', 'success');
-          this.cache.updateAfterUpdate('categories', { ...this.editing, ...payload } as Category);
+          this.cache.reloadAll(this.api);
           this.closeModal();
         },
         error: (err) => this.toast.showError(err, 'Update failed.')
@@ -110,7 +110,7 @@ export class CategoriesComponent implements AfterViewInit {
       this.api.createCategory(payload).subscribe({
         next: () => {
           this.toast.show('Category added', 'success');
-          this.cache.updateAfterCreate('categories', payload as Category);
+          this.cache.reloadAll(this.api);
           this.closeModal();
         },
         error: (err) => this.toast.showError(err, 'Create failed.')
@@ -138,7 +138,7 @@ export class CategoriesComponent implements AfterViewInit {
     this.api.deleteCategory(id).subscribe({
       next: () => {
         this.toast.show('Category deleted', 'success');
-        this.cache.updateAfterDelete('categories', id);
+        this.cache.reloadAll(this.api);
       },
       error: (err: any) => this.toast.showError(err, 'Delete failed.')
     });
